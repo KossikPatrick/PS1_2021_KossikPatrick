@@ -1,0 +1,87 @@
+#include <LiquidCrystal.h>
+const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+int sec=3;
+int h=11;
+int min=22;
+int zsec=1;
+unsigned int numar_CAN;
+int temperatura;
+float numar_volt;
+int aux,p;
+void setup() 
+{ OCR1A=15625;
+  TCCR1A=0;
+  TCCR1B = 1 << CS10 | 1<< CS12;
+  TCCR1B |=1 << WGM12;
+  TIMSK1 |=1 << OCIE1A;
+ lcd.begin(16, 2);
+}
+
+void loop()
+{
+  adc_init ();
+ while (1)
+{ 
+ numar_CAN=read_adc(0);
+ numar_volt=numar_CAN*4.887585532746823;
+ temperatura=(numar_volt-500)/10;
+ lcd.setCursor(1,0);
+lcd.print("Temp=");
+   lcd.print(temperatura);
+ aux=temperatura;
+ p=1;
+ while(temperatura>=10)
+ {
+   p=p*10;
+   temperatura=temperatura/10;
+ }
+   delay(500);l  cd.clear();
+ } 
+
+  }
+  void adc_init()
+{
+ADCSRA |= ((1<<ADPS2) | (1<<ADPS1) | (1<<ADPS0));
+ADMUX |= (1<<REFS0);
+ADCSRA |= (1<<ADEN);
+ADCSRA |= (1<<ADSC);
+}
+uint16_t read_adc(uint8_t channel)
+{
+ADMUX &= 0xF0;
+ADMUX |= channel;
+ADCSRA |= (1<<ADSC);
+while(ADCSRA & (1<<ADSC));
+return ADCW;
+}
+
+ISR(TIMER1_COMPA_vect) 
+{ 
+  	lcd.setCursor(1, 2);
+   sec++;
+	if(sec == 10)
+	{
+		sec= 0;
+		zsec++;
+      }
+  if(zsec==6)
+  { zsec=0;
+   	min++;
+  }
+  if(min==60)
+  { min=0;
+   h++;
+  }
+ if(h==13)
+ { h=0;
+ }
+  lcd.print("Ora: ");
+  lcd.print(h);
+  lcd.print(':');
+  lcd.print(min);
+   lcd.print(':');
+  lcd.print(zsec);
+  lcd.print(sec);
+  delay(1000);
+ }
